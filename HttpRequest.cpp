@@ -59,10 +59,13 @@ void HttpRequest::parse(std::string &request) {
                 } else {
                     method = NOP;
                 }
+                break;
                 case 2:
                     file_url = field;
+                    break;
                 case 3:
                     client_version = field;
+                    break;
                 } 
             }
          } else {
