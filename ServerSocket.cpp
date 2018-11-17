@@ -1,11 +1,11 @@
 #include "ServerSocket.h"
 
 ServerSocket::ServerSocket(std::string port_number, unsigned short backlog) {
-    ServerSocket::setup(port_number, backlog);
+    setup(port_number, backlog);
 }
 
 ServerSocket::~ServerSocket() {
-    ServerSocket::shutdown();
+    shutdown();
 }
 
 int ServerSocket::accept(struct sockadddr *address, socklen_t *address_len) {
@@ -28,7 +28,7 @@ void ServerSocket::setup(std::string port_number, unsigned short backlog) {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    int status = getaddrinfo(NULL, port_number, &hints, &service_info);
+    int status = getaddrinfo(NULL, port_number.c_str(), &hints, &service_info);
     if (status != 0) {
         fprintf(stderr, "getaddrinfo: %s.\n", gai_strerror(status));
         exit(1);
@@ -48,7 +48,7 @@ void ServerSocket::setup(std::string port_number, unsigned short backlog) {
         }
 
         if (bind(socket_fd, itr->ai_addr, itr->ai_addrlen) == -1) {
-            ServerSocket::shutdown();
+            shutdown();
             perror("Error binding socket to the specified port error ");
             continue;
         }
