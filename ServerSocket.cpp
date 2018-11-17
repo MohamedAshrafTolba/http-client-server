@@ -1,37 +1,48 @@
 #include "ServerSocket.h"
 
-ServerSocket::ServerSocket(std::string port_number, unsigned short backlog) {
-    setup(port_number, backlog);
+ServerSocket::ServerSocket(char *port_number, int backlog) {
+    this->port_number = port_number;
+    this->backlog = backlog;
+    setup();
 }
 
 ServerSocket::~ServerSocket() {
-    shutdown();
+    close();
 }
 
-int ServerSocket::accept(struct sockadddr *address, socklen_t *address_len) {
-    return accept(address, address_len);
+int ServerSocket::accept_connection(struct sockaddr *address, socklen_t *address_len) {
+    return accept(socket_fd, address, address_len);
 }
 
-int ServerSocket::shutdown() {
+int ServerSocket::close() {
     return shutdown(socket_fd, SHUT_RDWR);
 }
 
-int ServerSocket::get_socket_fd() {
+int ServerSocket::get_socket_fd() const {
     return socket_fd;
 }
 
-void ServerSocket::setup(std::string port_number, unsigned short backlog) {
-    struct addrinfo hints, *service_info, *itr;
+char *ServerSocket::get_port_number() const {
+    return port_number;
+}
 
-    std::memset(&hints, 0, sizeof(hints));
+int ServerSocket::get_backlog() const {
+    return backlog;
+}
+
+void ServerSocket::setup() {
+    struct addrinfo hints, *service_info, *itr;
+    int yes = 1;
+
+    memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    int status = getaddrinfo(NULL, port_number.c_str(), &hints, &service_info);
+    int status = getaddrinfo(NULL, port_number, &hints, &service_info);
     if (status != 0) {
         fprintf(stderr, "getaddrinfo: %s.\n", gai_strerror(status));
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     for (itr = service_info ; itr != NULL ; itr = itr->ai_next) {
@@ -43,13 +54,14 @@ void ServerSocket::setup(std::string port_number, unsigned short backlog) {
 
         if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, 
                 sizeof(int)) == -1) {
+            close();
             perror("Error setting server socket options ");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
 
         if (bind(socket_fd, itr->ai_addr, itr->ai_addrlen) == -1) {
-            shutdown();
-            perror("Error binding server socket to the specified port error ");
+            close();
+            perror("Error binding server socket to the specified port ");
             continue;
         }
 
@@ -59,12 +71,14 @@ void ServerSocket::setup(std::string port_number, unsigned short backlog) {
     freeaddrinfo(service_info);
 
     if (itr == NULL) {
+        close();
         fprintf(stderr, "Failed to bind socket to port.\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     if (listen(socket_fd, backlog) == -1) {
+        close();
         perror("Error making socket listen to incoming connections ");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 }
