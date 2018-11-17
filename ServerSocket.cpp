@@ -32,7 +32,7 @@ void ServerSocket::setup_socket(char port_number[], unsigned short backlog) {
     int status = getaddrinfo(NULL, port_number, &hints, &service_info);
     if (status != 0) {
         fprintf(stderr, "getaddrinfo: %s.\n", gai_strerror(status));
-        exit(1);
+        return;
     }
 
     for (itr = service_info ; itr != NULL ; itr = itr->ai_next) {
@@ -44,13 +44,14 @@ void ServerSocket::setup_socket(char port_number[], unsigned short backlog) {
 
         if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, 
                 sizeof(int)) == -1) {
+            shutdown_socket();
             perror("Error setting server socket options ");
             exit(1);
         }
 
         if (bind(socket_fd, itr->ai_addr, itr->ai_addrlen) == -1) {
-            shutdown();
-            perror("Error binding server socket to the specified port error ");
+            shutdown_socket();
+            perror("Error binding server socket to the specified port ");
             continue;
         }
 
@@ -60,11 +61,13 @@ void ServerSocket::setup_socket(char port_number[], unsigned short backlog) {
     freeaddrinfo(service_info);
 
     if (itr == NULL) {
+        shutdown_socket();
         fprintf(stderr, "Failed to bind socket to port.\n");
         exit(1);
     }
 
     if (listen(socket_fd, backlog) == -1) {
+        shutdown_socket();
         perror("Error making socket listen to incoming connections ");
         exit(1);
     }
