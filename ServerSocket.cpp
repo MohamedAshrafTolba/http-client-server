@@ -1,26 +1,36 @@
 #include "ServerSocket.h"
 
 ServerSocket::ServerSocket(char *port_number, int backlog) {
-    setup_socket(port_number, backlog);
+    this->port_number = port_number;
+    this->backlog = backlog;
+    setup();
 }
 
 ServerSocket::~ServerSocket() {
-    shutdown_socket();
+    close();
 }
 
 int ServerSocket::accept_connection(struct sockaddr *address, socklen_t *address_len) {
     return accept(socket_fd, address, address_len);
 }
 
-int ServerSocket::shutdown_socket() {
+int ServerSocket::close() {
     return shutdown(socket_fd, SHUT_RDWR);
 }
 
-int ServerSocket::get_socket_fd() {
+int ServerSocket::get_socket_fd() const {
     return socket_fd;
 }
 
-void ServerSocket::setup_socket(char *port_number, int backlog) {
+char *ServerSocket::get_port_number() const {
+    return port_number;
+}
+
+int ServerSocket::get_backlog() const {
+    return backlog;
+}
+
+void ServerSocket::setup() {
     struct addrinfo hints, *service_info, *itr;
     int yes = 1;
 
@@ -32,7 +42,7 @@ void ServerSocket::setup_socket(char *port_number, int backlog) {
     int status = getaddrinfo(NULL, port_number, &hints, &service_info);
     if (status != 0) {
         fprintf(stderr, "getaddrinfo: %s.\n", gai_strerror(status));
-        return;
+        exit(EXIT_FAILURE);
     }
 
     for (itr = service_info ; itr != NULL ; itr = itr->ai_next) {
@@ -44,13 +54,13 @@ void ServerSocket::setup_socket(char *port_number, int backlog) {
 
         if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, 
                 sizeof(int)) == -1) {
-            shutdown_socket();
+            close();
             perror("Error setting server socket options ");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
 
         if (bind(socket_fd, itr->ai_addr, itr->ai_addrlen) == -1) {
-            shutdown_socket();
+            close();
             perror("Error binding server socket to the specified port ");
             continue;
         }
@@ -61,14 +71,14 @@ void ServerSocket::setup_socket(char *port_number, int backlog) {
     freeaddrinfo(service_info);
 
     if (itr == NULL) {
-        shutdown_socket();
+        close();
         fprintf(stderr, "Failed to bind socket to port.\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     if (listen(socket_fd, backlog) == -1) {
-        shutdown_socket();
+        close();
         perror("Error making socket listen to incoming connections ");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 }

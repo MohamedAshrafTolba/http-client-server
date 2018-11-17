@@ -11,16 +11,19 @@
 #include <arpa/inet.h>
 
 class ServerSocket {
-public:
-    ServerSocket(char *port_number, int backlog);
-    ~ServerSocket();
-    int accept_connection(struct sockaddr *address, socklen_t *address_len);
-    int shutdown_socket();
-    int get_socket_fd();
-
-private:
-    int socket_fd;
-    void setup_socket(char *port_number, int backlog);
+    public:
+        ServerSocket(char *port_number, int backlog);
+        ~ServerSocket();
+        int accept_connection(struct sockaddr *address, socklen_t *address_len);
+        int close();
+        int get_socket_fd() const;
+        char *get_port_number() const;
+        int get_backlog() const;
+    private:
+        int socket_fd;
+        char *port_number;
+        int backlog;
+        void setup();
 };
 
 #endif

@@ -1,7 +1,9 @@
 #include "Socket.h"
 
 Socket::Socket(char *host_name, char *port_number) {
-    setup_socket(host_name, port_number);
+    this->host_name = host_name;
+    this->port_number = port_number;
+    setup();
 }
 
 Socket::Socket(int socket_fd) {
@@ -9,7 +11,7 @@ Socket::Socket(int socket_fd) {
 }
 
 Socket::~Socket() {
-    shutdown_socket();
+    close();
 }
 
 ssize_t Socket::send_message(const void *message, size_t length, int flags) {
@@ -20,15 +22,23 @@ ssize_t Socket::recieve_message(void *buffer, size_t length, int flags) {
     return recv(socket_fd, buffer, length, flags);
 }
 
-int Socket::shutdown_socket() {
+int Socket::close() {
     return shutdown(socket_fd, SHUT_RDWR);
 }
 
-int Socket::get_socket_fd() {
+int Socket::get_socket_fd() const {
     return socket_fd;
 }
 
-void Socket::setup_socket(char *host_name, char *port_number) {
+char *Socket::get_host_name() const {
+    return host_name;
+}
+
+char *Socket::get_port_name() const {
+    return port_number;
+}
+
+void Socket::setup() {
     struct addrinfo hints, *service_info, *itr;
 
     memset(&hints, 0, sizeof(hints));
@@ -38,7 +48,7 @@ void Socket::setup_socket(char *host_name, char *port_number) {
     int status = getaddrinfo(host_name, port_number, &hints, &service_info);
     if (status != 0) {
         fprintf(stderr, "getaddrinfo: %s.\n", gai_strerror(status));
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     for (itr = service_info ; itr != NULL ; itr = itr->ai_next) {
@@ -49,7 +59,7 @@ void Socket::setup_socket(char *host_name, char *port_number) {
         }
 
         if (connect(socket_fd, itr->ai_addr, itr->ai_addrlen) == -1) {
-            shutdown_socket();
+            close();
             perror("Error connecting client socket ");
             continue;
         }
@@ -60,8 +70,8 @@ void Socket::setup_socket(char *host_name, char *port_number) {
     freeaddrinfo(service_info);
 
     if (itr == NULL) {
-        shutdown_socket();
+        close();
         fprintf(stderr, "Failed to connect client socket to the specified address.\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 }
