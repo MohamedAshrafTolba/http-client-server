@@ -1,18 +1,18 @@
 #include "ServerSocket.h"
 
-ServerSocket::ServerSocket(std::string port_number, unsigned short backlog) {
-    setup(port_number, backlog);
+ServerSocket::ServerSocket(char port_number[], unsigned short backlog) {
+    setup_socket(port_number, backlog);
 }
 
 ServerSocket::~ServerSocket() {
-    shutdown();
+    shutdown_socket();
 }
 
-int ServerSocket::accept(struct sockadddr *address, socklen_t *address_len) {
+int ServerSocket::accept_connection(struct sockadddr *address, socklen_t *address_len) {
     return accept(address, address_len);
 }
 
-int ServerSocket::shutdown() {
+int ServerSocket::shutdown_socket() {
     return shutdown(socket_fd, SHUT_RDWR);
 }
 
@@ -20,15 +20,16 @@ int ServerSocket::get_socket_fd() {
     return socket_fd;
 }
 
-void ServerSocket::setup(std::string port_number, unsigned short backlog) {
+void ServerSocket::setup_socket(char port_number[], unsigned short backlog) {
     struct addrinfo hints, *service_info, *itr;
+    int yes = 1;
 
-    std::memset(&hints, 0, sizeof(hints));
+    memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    int status = getaddrinfo(NULL, port_number.c_str(), &hints, &service_info);
+    int status = getaddrinfo(NULL, port_number, &hints, &service_info);
     if (status != 0) {
         fprintf(stderr, "getaddrinfo: %s.\n", gai_strerror(status));
         exit(1);
