@@ -1,7 +1,7 @@
 #include "Socket.h"
 
-Socket::Socket(std::string host_name, std::string post_number) {
-    setup(port_number);
+Socket::Socket(std::string host_name, std::string port_number) {
+    setup(host_name, port_number);
 }
 
 Socket::Socket(int socket_fd) {
@@ -56,7 +56,7 @@ void Socket::setup(std::string host_name, std::string port_number) {
     freeaddrinfo(service_info);
 
     if (itr == NULL) {
-        fprintf(stderr, "Failed to connect client socket the specified address.\n");
+        fprintf(stderr, "Failed to connect client socket to the specified address.\n");
         exit(1);
     }
 }
