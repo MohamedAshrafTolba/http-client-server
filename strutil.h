@@ -5,6 +5,7 @@
 
 namespace strutil {
     bool iequals(std::string a, std::string b);
+    char *time_cstr(time_t *t);
 }
 
 #endif

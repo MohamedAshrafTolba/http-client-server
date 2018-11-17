@@ -5,7 +5,8 @@
 
 enum RequestMethod {
     GET,
-    POST
+    POST,
+    NOP
 };
 
 class HttpRequest {

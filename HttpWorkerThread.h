@@ -18,7 +18,8 @@ private:
     bool done;
     std::thread *worker;
     void start();
-    void parse_http_request(std::string &request);
+    void handle_http_request(std::string &request);
+    std::string get_content_type(std::string url);
 };
 
 #endif
