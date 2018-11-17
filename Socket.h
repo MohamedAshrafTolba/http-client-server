@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <cstdio>
+#include <cstdlib>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -11,7 +12,7 @@
 
 class Socket {
 public:
-    Socket(char host_name[], char port_number[]);
+    Socket(char *host_name, char *port_number);
     Socket(int socket_fd);
     ~Socket();
     ssize_t send_message(const void *message, size_t length, int flags);
@@ -21,7 +22,7 @@ public:
 
 private:
     int socket_fd;
-    void setup_socket(char host_name[], char port_number[]);
+    void setup_socket(char *host_name, char *port_number);
 };
 
 #endif

@@ -1,6 +1,6 @@
 #include "Socket.h"
 
-Socket::Socket(char host_name[], char port_number[]) {
+Socket::Socket(char *host_name, char *port_number) {
     setup_socket(host_name, port_number);
 }
 
@@ -17,7 +17,7 @@ ssize_t Socket::send_message(const void *message, size_t length, int flags) {
 }
 
 ssize_t Socket::recieve_message(void *buffer, size_t length, int flags) {
-    return recieve(socket_fd, buffer, length, flags);
+    return recv(socket_fd, buffer, length, flags);
 }
 
 int Socket::shutdown_socket() {
@@ -28,7 +28,7 @@ int Socket::get_socket_fd() {
     return socket_fd;
 }
 
-void Socket::setup_socket(char host_name[], char port_number[]) {
+void Socket::setup_socket(char *host_name, char *port_number) {
     struct addrinfo hints, *service_info, *itr;
 
     memset(&hints, 0, sizeof(hints));
