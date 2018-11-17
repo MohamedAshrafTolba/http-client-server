@@ -37,19 +37,19 @@ void ServerSocket::setup(std::string port_number, unsigned short backlog) {
     for (itr = service_info ; itr != NULL ; itr = itr->ai_next) {
         socket_fd = socket(itr->ai_family, itr->ai_socktype, itr->ai_protocol);
         if (socket_fd == -1) {
-            perror("Error creating socket ");
+            perror("Error creating server socket ");
             continue;
         }
 
         if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, 
                 sizeof(int)) == -1) {
-            perror("Error setting socket options ");
+            perror("Error setting server socket options ");
             exit(1);
         }
 
         if (bind(socket_fd, itr->ai_addr, itr->ai_addrlen) == -1) {
             shutdown();
-            perror("Error binding socket to the specified port error ");
+            perror("Error binding server socket to the specified port error ");
             continue;
         }
 

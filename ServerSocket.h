@@ -19,7 +19,7 @@ public:
 
 private:
     int socket_fd;
-    setup(std::string port_number, unsigned short backlog);
+    void setup(std::string port_number, unsigned short backlog);
 };
 
 #endif
