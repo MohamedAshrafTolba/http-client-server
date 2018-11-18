@@ -14,7 +14,7 @@ class ServerSocket {
     public:
         ServerSocket(char *port_number, int backlog);
         ~ServerSocket();
-        int accept_connection(struct sockaddr *address, socklen_t *address_len);
+        int accept_connection();
         int close();
         int get_socket_fd() const;
         char *get_port_number() const;

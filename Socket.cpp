@@ -70,7 +70,6 @@ void Socket::setup() {
     freeaddrinfo(service_info);
 
     if (itr == NULL) {
-        close();
         fprintf(stderr, "Failed to connect client socket to the specified address.\n");
         exit(EXIT_FAILURE);
     }

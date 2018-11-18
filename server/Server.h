@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "../ServerSocket.h"
+#include "../Socket.h"
 #include "../HttpWorkerThread.h";
 
 class Server {

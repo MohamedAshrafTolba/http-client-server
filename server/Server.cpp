@@ -17,7 +17,14 @@ void Server::run() {
         while (workers_pool.size() >= max_workers) {
             sleep(2);
         }
-        // TODO: Accept incoming connections
+        Socket *client_socket = new Socket(server_socket->accept_connection());
+        
+        if (client_socket->get_socket_fd() == -1) {
+            perror("Error connecting to a client ");
+            continue;
+        }
+
+        // TODO: Create a thread for this socket
     }
 }
 

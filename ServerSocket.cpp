@@ -10,8 +10,10 @@ ServerSocket::~ServerSocket() {
     close();
 }
 
-int ServerSocket::accept_connection(struct sockaddr *address, socklen_t *address_len) {
-    return accept(socket_fd, address, address_len);
+int ServerSocket::accept_connection() {
+    struct sockaddr client_address;
+    socklen_t address_len = sizeof(client_address);
+    return accept(socket_fd, &client_address, &address_len);
 }
 
 int ServerSocket::close() {
@@ -54,7 +56,6 @@ void ServerSocket::setup() {
 
         if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, 
                 sizeof(int)) == -1) {
-            close();
             perror("Error setting server socket options ");
             exit(EXIT_FAILURE);
         }
@@ -71,13 +72,11 @@ void ServerSocket::setup() {
     freeaddrinfo(service_info);
 
     if (itr == NULL) {
-        close();
         fprintf(stderr, "Failed to bind socket to port.\n");
         exit(EXIT_FAILURE);
     }
 
     if (listen(socket_fd, backlog) == -1) {
-        close();
         perror("Error making socket listen to incoming connections ");
         exit(EXIT_FAILURE);
     }
