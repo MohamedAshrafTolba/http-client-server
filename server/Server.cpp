@@ -1,7 +1,6 @@
 #include "Server.h"
 
-Server::Server(std::string server_name, std::string port_number, int backlog, int max_workers) {
-    this->server_name = server_name;
+Server::Server(std::string &port_number, int backlog, int max_workers) {
     this->port_number = port_number;
     this->backlog = backlog;
     this->max_workers = max_workers;
@@ -28,10 +27,6 @@ void Server::run() {
 
         // TODO: Create a thread for this socket
     }
-}
-
-std::string Server::get_server_name() const {
-    return server_name;
 }
 
 std::string Server::get_port_number() const {

@@ -7,7 +7,7 @@
 
 class ServerSocket {
     public:
-        ServerSocket(std::string port_number, int backlog);
+        ServerSocket(std::string &port_number, int backlog);
         ~ServerSocket();
         int accept_connection();
         int close();
