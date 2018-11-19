@@ -1,6 +1,6 @@
 #include "ServerSocket.h"
 
-ServerSocket::ServerSocket(char *port_number, int backlog) {
+ServerSocket::ServerSocket(std::string port_number, int backlog) {
     this->port_number = port_number;
     this->backlog = backlog;
     setup();
@@ -24,7 +24,7 @@ int ServerSocket::get_socket_fd() const {
     return socket_fd;
 }
 
-char *ServerSocket::get_port_number() const {
+std::string ServerSocket::get_port_number() const {
     return port_number;
 }
 
@@ -41,7 +41,7 @@ void ServerSocket::setup() {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    int status = getaddrinfo(NULL, port_number, &hints, &service_info);
+    int status = getaddrinfo(NULL, port_number.c_str(), &hints, &service_info);
     if (status != 0) {
         fprintf(stderr, "getaddrinfo: %s.\n", gai_strerror(status));
         exit(EXIT_FAILURE);

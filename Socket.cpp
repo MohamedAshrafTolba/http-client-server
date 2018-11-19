@@ -1,6 +1,6 @@
 #include "Socket.h"
 
-Socket::Socket(char *host_name, char *port_number) {
+Socket::Socket(std::string host_name, std::string port_number) {
     this->host_name = host_name;
     this->port_number = port_number;
     setup();
@@ -14,12 +14,14 @@ Socket::~Socket() {
     close();
 }
 
-ssize_t Socket::send_message(const void *message, size_t length, int flags) {
-    return send(socket_fd, message, length, flags);
+std::string Socket::get_http_headers() {
+    // TODO
+    return NULL;
 }
 
-ssize_t Socket::recieve_message(void *buffer, size_t length, int flags) {
-    return recv(socket_fd, buffer, length, flags);
+std::string Socket::get_http_body(size_t http_body_size) {
+    // TODO
+    return NULL;
 }
 
 int Socket::close() {
@@ -30,11 +32,11 @@ int Socket::get_socket_fd() const {
     return socket_fd;
 }
 
-char *Socket::get_host_name() const {
+std::string Socket::get_host_name() const {
     return host_name;
 }
 
-char *Socket::get_port_name() const {
+std::string Socket::get_port_name() const {
     return port_number;
 }
 
@@ -45,7 +47,8 @@ void Socket::setup() {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    int status = getaddrinfo(host_name, port_number, &hints, &service_info);
+    int status = getaddrinfo(host_name.c_str(), port_number.c_str(),
+            &hints, &service_info);
     if (status != 0) {
         fprintf(stderr, "getaddrinfo: %s.\n", gai_strerror(status));
         exit(EXIT_FAILURE);
