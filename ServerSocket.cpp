@@ -65,7 +65,6 @@ void ServerSocket::setup() {
             perror("Error binding server socket to the specified port ");
             continue;
         }
-
         break;
     }
 
@@ -75,7 +74,7 @@ void ServerSocket::setup() {
         fprintf(stderr, "Failed to bind socket to port.\n");
         exit(EXIT_FAILURE);
     }
-
+    
     if (listen(socket_fd, backlog) == -1) {
         perror("Error making socket listen to incoming connections ");
         exit(EXIT_FAILURE);

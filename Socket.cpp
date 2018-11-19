@@ -15,13 +15,13 @@ Socket::~Socket() {
     close();
 }
 
-std::string Socket::read_http_msg_headers() {
+std::string Socket::recieve_http_msg_headers() {
     std::string http_headers;
     if (!read_socket_buffer(http_headers)) {
         bool http_headers_found = false;
         while (!http_headers_found) {
-            ssize_t bytes_recieved = recv(socket_fd, &socket_buffer[0],
-                     MAX_BUFFER_SIZE, MSG_WAITALL);
+            ssize_t bytes_recieved = recv(socket_fd, &socket_buffer[0], 
+                    MAX_BUFFER_SIZE, MSG_WAITALL);
             if (bytes_recieved < 0) {
                 // Error
             }
@@ -32,7 +32,7 @@ std::string Socket::read_http_msg_headers() {
     return http_headers;
 }
 
-std::string Socket::read_http_msg_body(std::size_t http_body_size) {
+std::string Socket::recieve_http_msg_body(std::size_t http_body_size) {
     std::string http_body;
     if (!read_socket_buffer(http_body)) {
         ssize_t bytes_recieved = recv(socket_fd, &http_body[0], 
@@ -46,14 +46,15 @@ std::string Socket::read_http_msg_body(std::size_t http_body_size) {
     return http_body;
 }
 
-std::size_t Socket::write_http_msg(std::string &message) {
+std::size_t Socket::send_http_msg(std::string &message) {
     std::string socket_write_buffer;
     int i = 0;
     while (i < message.length()) {
-        socket_write_buffer = message.substr(i, std::min(MAX_BUFFER_SIZE,
-                (int)(message.length() - i)));
+        socket_write_buffer = message.substr(i, 
+                std::min(MAX_BUFFER_SIZE, (int)(message.length() - i)));
         
-        ssize_t bytes_sent = send(socket_fd, &socket_write_buffer[0], MAX_BUFFER_SIZE, 0);
+        ssize_t bytes_sent = send(socket_fd, &socket_write_buffer[0], 
+                MAX_BUFFER_SIZE, 0);
         if (bytes_sent < 0) {
             // Error
         }
@@ -80,18 +81,18 @@ std::string Socket::get_port_number() const {
 
 void Socket::setup() {
     struct addrinfo hints, *service_info, *itr;
-
+    
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
-
+    
     int status = getaddrinfo(host_name.c_str(), port_number.c_str(),
             &hints, &service_info);
     if (status != 0) {
         fprintf(stderr, "getaddrinfo: %s.\n", gai_strerror(status));
         exit(EXIT_FAILURE);
     }
-
+    
     for (itr = service_info ; itr != NULL ; itr = itr->ai_next) {
         socket_fd = socket(itr->ai_family, itr->ai_socktype, itr->ai_protocol);
         if (socket_fd == -1) {
@@ -104,12 +105,11 @@ void Socket::setup() {
             perror("Error connecting client socket ");
             continue;
         }
-
         break;
     }
-
+    
     freeaddrinfo(service_info);
-
+    
     if (itr == NULL) {
         fprintf(stderr, "Failed to connect client socket to the specified address.\n");
         exit(EXIT_FAILURE);
