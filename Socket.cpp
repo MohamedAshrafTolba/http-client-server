@@ -118,7 +118,7 @@ void Socket::setup() {
 
 bool Socket::read_socket_buffer(std::string &output) {
     if (!socket_buffer.empty()) {
-        std::size_t delim_pos = socket_buffer.find(HTTP_REQ_BLOCK_DELIMITER);
+        std::size_t delim_pos = socket_buffer.find("\r\n\r\n");
         if (delim_pos != std::string::npos) {
             output += socket_buffer.substr(0, delim_pos);
             socket_buffer = socket_buffer.substr(delim_pos + 4);

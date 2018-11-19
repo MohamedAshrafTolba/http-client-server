@@ -6,7 +6,6 @@
 #include <netdb.h>
 
 #define MAX_BUFFER_SIZE 8192
-#define HTTP_REQ_BLOCK_DELIMITER "\r\n\r\n"
 
 class Socket {
     public:
