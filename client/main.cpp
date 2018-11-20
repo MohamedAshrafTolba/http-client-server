@@ -1,5 +1,5 @@
 #include "Client.h"
-#include "strutil.h"
+#include "../strutil.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>

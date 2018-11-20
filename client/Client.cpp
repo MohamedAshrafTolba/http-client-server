@@ -3,9 +3,9 @@
 #include <fstream>
 
 Client::Client(std::string &host, std::string &port,
-    std::string &file_name, RequestMethod method, bool dry_run = false) {
+    std::string &file_name, RequestMethod method, bool dry_run) {
     
-    Socket *socket = new Socket(host, port);
+    socket = new Socket(host, port);
     this->file_name = file_name;
     this->method = method;
     this->dry_run = dry_run;

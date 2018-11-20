@@ -41,14 +41,14 @@ std::string Socket::recieve_http_msg_body(std::size_t http_body_size) {
             // Error
         }
     }
-    http_body = http_body.substr(0, http_body.length - 4);
+    http_body = http_body.substr(0, http_body.length() - 4);
     http_body += '\0';
     return http_body;
 }
 
 std::size_t Socket::send_http_msg(std::string &message) {
     std::string socket_write_buffer;
-    int i = 0;
+    unsigned long i = 0;
     while (i < message.length()) {
         socket_write_buffer = message.substr(i, 
                 std::min(MAX_BUFFER_SIZE, (int)(message.length() - i)));

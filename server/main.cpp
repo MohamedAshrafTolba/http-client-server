@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     Server *server = new Server(port_number, BACKLOG, MAX_WORKERS);
 
     std::cout << "The server has been successfully configured on port: " 
-            << server->get_port_number << std::endl;
+            << server->get_port_number() << std::endl;
 
     server->run();
 

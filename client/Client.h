@@ -1,9 +1,9 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include<string>
-#include "Socket.h"
-#include "HttpRequest.h"
+#include <string>
+#include "../Socket.h"
+#include "../HttpRequest.h"
 
 #define HTTP_VERSION "HTTP/1.1"
 
