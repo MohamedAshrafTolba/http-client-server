@@ -1,4 +1,5 @@
 #include "Socket.h"
+#include <cstring>
 
 Socket::Socket(std::string &host_name, std::string &port_number) {
     this->host_name = host_name;

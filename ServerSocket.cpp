@@ -1,4 +1,5 @@
 #include "ServerSocket.h"
+#include <cstring>
 
 ServerSocket::ServerSocket(std::string &port_number, int backlog) {
     this->port_number = port_number;
