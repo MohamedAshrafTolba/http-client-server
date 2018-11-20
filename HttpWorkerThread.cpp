@@ -14,7 +14,8 @@ using boost::filesystem::file_size;
 using boost::filesystem::load_string_file;
 using boost::filesystem::save_string_file;
 
-HttpWorkerThread::HttpWorkerThread(int timeout) {
+HttpWorkerThread::HttpWorkerThread(int socket_fd, int timeout) {
+    this->socket = new Socket(socket_fd);
     this->timeout = timeout;
     start();
 }
@@ -22,6 +23,10 @@ HttpWorkerThread::HttpWorkerThread(int timeout) {
 HttpWorkerThread::~HttpWorkerThread(){
     worker->join();
     delete worker;
+    if (socket != nullptr) {
+        socket->close();
+    } 
+    delete socket;
 }
 
 bool HttpWorkerThread::is_done() {
@@ -30,20 +35,19 @@ bool HttpWorkerThread::is_done() {
 
 void HttpWorkerThread::start() {
     start_time = steady_clock::now();
-    auto f = [&] () {
-        int64_t prev_diff = 0;
-        while (!done) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            std::cout << prev_diff << std::endl;
-            auto now = steady_clock::now();
-            int64_t time_diff = duration_cast<std::chrono::seconds>(now - start_time).count();
-            prev_diff = time_diff;
-            if (time_diff >= timeout) {
-                done = true;
-            }
-        }    
-    };
-    worker = new std::thread(f);
+    worker = new std::thread(execute);
+}
+
+void HttpWorkerThread::execute() {
+    while (!done) {
+        std::string headers = socket->recieve_http_msg_headers();
+        handle_http_request(headers);
+        auto now = steady_clock::now();
+        int64_t time_diff = duration_cast<std::chrono::seconds>(now - start_time).count();
+        if (time_diff >= timeout) {
+            done = true;
+        }
+    }    
 }
 
 void HttpWorkerThread::handle_http_request(std::string &http_request) {
@@ -82,12 +86,13 @@ void HttpWorkerThread::handle_http_request(std::string &http_request) {
         if (length <= 0) {
             response_code = "400 Bad Request";            
         } else {
-            // TODO: Read request body into request.body.
-            save_string_file(file_path, request.get_body());
+            std::string body = socket->recieve_http_msg_body(length);
+            save_string_file(file_path, body);
         }
         response_stream << http_version << ' ' << response_code << "\r\n";
     }
-    // TODO: Send Response.
+    std::string response = response_stream.str();
+    socket->send_http_msg(response);
 }
 
 std::string HttpWorkerThread::get_content_type(std::string url) {

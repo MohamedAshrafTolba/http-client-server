@@ -9,6 +9,9 @@
 #include "../Socket.h"
 #include "../HttpWorkerThread.h";
 
+#define TIMEOUT 30
+#define SERVER_NAME "dummy"
+
 class Server {
     public:
         Server(std::string &port_number, int backlog, int max_workers);
