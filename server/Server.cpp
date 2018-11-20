@@ -1,7 +1,7 @@
 #include "Server.h"
 #include <cmath>
 
-Server::Server(std::string &port_number, int backlog, int max_workers) {
+Server::Server(std::string &port_number, unsigned short backlog, unsigned long max_workers) {
     this->port_number = port_number;
     this->backlog = backlog;
     this->max_workers = max_workers;
@@ -37,9 +37,6 @@ void Server::run() {
             // Error
         }
 
-        Socket *client_socket = new Socket(connecting_socket_fd);
-
-        // TODO: Create a thread for this socket
         int timeout = TIMEOUT - floor(0.01 * TIMEOUT * workers_pool.size());
         HttpWorkerThread *worker = new HttpWorkerThread(connecting_socket_fd, http_version, timeout);
         workers_pool.push_back(worker);
@@ -50,10 +47,10 @@ std::string Server::get_port_number() const {
     return port_number;
 }
 
-int Server::get_backlog() const {
+unsigned short Server::get_backlog() const {
     return backlog;
 }
 
-int Server::get_max_workers() const {
+unsigned long Server::get_max_workers() const {
     return max_workers;
 }

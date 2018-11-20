@@ -1,6 +1,7 @@
 #ifndef HTTPREQUEST_H
 #define HTTPREQUEST_H
 
+#include <string>
 #include <unordered_map>
 
 enum RequestMethod {
