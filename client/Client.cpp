@@ -49,7 +49,7 @@ void Client::make_request() {
     socket->send_http_msg(request);
 }
 
-std::string read_file(std::string &file_name) {
+std::string Client::read_file(std::string &file_name) {
     std::string file_path = "." + file_name;
     std::ifstream input_stream(file_path);
     std::string contents(std::istreambuf_iterator<char>(input_stream), {});
@@ -57,7 +57,7 @@ std::string read_file(std::string &file_name) {
     return contents;
 }
 
-void write_file(std::string &file_name, std::string &contents) {
+void Client::write_file(std::string &file_name, std::string &contents) {
     std::string file_path = "." + file_name;
     std::ofstream output_stream(file_path);
     output_stream << contents;
