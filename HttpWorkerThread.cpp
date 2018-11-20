@@ -44,6 +44,7 @@ void HttpWorkerThread::start() {
 void HttpWorkerThread::execute() {
     while (!done) {
         std::string headers = socket->recieve_http_msg_headers();
+        std::cout << "Headers:\n" << headers;
         handle_http_request(headers);
         auto now = steady_clock::now();
         int64_t time_diff = duration_cast<std::chrono::seconds>(now - start_time).count();
@@ -55,7 +56,6 @@ void HttpWorkerThread::execute() {
 
 void HttpWorkerThread::handle_http_request(std::string &http_request) {
     HttpRequest request(http_request);
-
     std::stringstream response_stream;
     std::string file_name = "." + request.get_file_url();
     path file_path = path(file_name);

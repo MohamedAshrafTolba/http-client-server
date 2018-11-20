@@ -12,6 +12,8 @@ set( SOURCES main.cpp Server.cpp ../HttpRequest.cpp ../HttpWorkerThread.cpp ../S
 
 find_package( Boost REQUIRED COMPONENTS system filesystem )
 
+find_package(Threads REQUIRED)
+
 add_executable( http-server ${HEADERS} ${SOURCES} )
 
-target_link_libraries( http-server Boost::system Boost::filesystem )
+target_link_libraries( http-server Boost::system Boost::filesystem Threads::Threads )
