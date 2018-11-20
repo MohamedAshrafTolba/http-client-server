@@ -38,7 +38,7 @@ bool HttpWorkerThread::is_done() {
 
 void HttpWorkerThread::start() {
     start_time = steady_clock::now();
-    worker = new std::thread(execute);
+    worker = new std::thread(&HttpWorkerThread::execute, this);
 }
 
 void HttpWorkerThread::execute() {
