@@ -5,11 +5,12 @@
 #include <mutex>
 #include <thread>
 #include <string>
+#include <atomic>
 #include "Socket.h"
 
 class HttpWorkerThread {
 public: 
-    HttpWorkerThread(int socket_fd, int timeout = 30);
+    HttpWorkerThread(int socket_fd, std::string &http_version, int timeout = 30);
     ~HttpWorkerThread();
     bool is_done();
 private:
@@ -18,6 +19,7 @@ private:
     int timeout;
     std::atomic<bool> done;
     std::thread *worker;
+    std::string http_version;
     void start();
     void execute();
     void handle_http_request(std::string &request);

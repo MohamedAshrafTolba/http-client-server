@@ -11,6 +11,7 @@
 
 #define TIMEOUT 30
 #define SERVER_NAME "dummy"
+#define HTTP_VERSION "HTTP/1.1"
 
 class Server {
     public:

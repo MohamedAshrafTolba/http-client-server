@@ -13,6 +13,7 @@ Server::~Server() {
 }
 
 void Server::run() {
+    std::string http_version(HTTP_VERSION);
     while (true) {
         
         for (auto it = workers_pool.begin(); it < workers_pool.end();) {
@@ -24,7 +25,7 @@ void Server::run() {
                 it++;
             }
         }
-        
+
         while (workers_pool.size() >= max_workers) {
             sleep(2);
         }
@@ -40,7 +41,7 @@ void Server::run() {
 
         // TODO: Create a thread for this socket
         int timeout = TIMEOUT - floor(0.01 * TIMEOUT * workers_pool.size());
-        HttpWorkerThread *worker = new HttpWorkerThread(connecting_socket_fd, timeout);
+        HttpWorkerThread *worker = new HttpWorkerThread(connecting_socket_fd, http_version, timeout);
         workers_pool.push_back(worker);
     }
 }

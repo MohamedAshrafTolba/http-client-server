@@ -14,14 +14,17 @@ using boost::filesystem::file_size;
 using boost::filesystem::load_string_file;
 using boost::filesystem::save_string_file;
 
-HttpWorkerThread::HttpWorkerThread(int socket_fd, int timeout) {
+HttpWorkerThread::HttpWorkerThread(int socket_fd, std::string &http_version, int timeout) {
     this->socket = new Socket(socket_fd);
     this->timeout = timeout;
+    this->http_version = http_version;
     start();
 }
 
 HttpWorkerThread::~HttpWorkerThread(){
-    worker->join();
+    if (worker != nullptr) {
+        worker->join();
+    }
     delete worker;
     if (socket != nullptr) {
         socket->close();
@@ -53,7 +56,6 @@ void HttpWorkerThread::execute() {
 void HttpWorkerThread::handle_http_request(std::string &http_request) {
     HttpRequest request(http_request);
 
-    std::string http_version = "HTTP/1.1";
     std::stringstream response_stream;
     std::string file_name = "." + request.get_file_url();
     path file_path = path(file_name);
@@ -79,20 +81,26 @@ void HttpWorkerThread::handle_http_request(std::string &http_request) {
             load_string_file(file_path, data);
             response_stream << data;
         }
-        
+        std::string response = response_stream.str();
+        socket->send_http_msg(response);
     } else if (request.get_request_method() == POST) {
         std::string length_str = request.get_options()["Content-Length"];
         int length = atoi(length_str.c_str());
         if (length <= 0) {
-            response_code = "400 Bad Request";            
+            response_stream << http_version << ' ' << "400 Bad Request" << "\r\n";
+            std::string response = response_stream.str();
+            socket->send_http_msg(response);
+            
+            return;
         } else {
+            response_stream << http_version << ' ' << response_code << "\r\n";
+            std::string response = response_stream.str();
+            socket->send_http_msg(response);
+            
             std::string body = socket->recieve_http_msg_body(length);
             save_string_file(file_path, body);
         }
-        response_stream << http_version << ' ' << response_code << "\r\n";
     }
-    std::string response = response_stream.str();
-    socket->send_http_msg(response);
 }
 
 std::string HttpWorkerThread::get_content_type(std::string url) {
