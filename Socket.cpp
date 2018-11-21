@@ -1,5 +1,9 @@
 #include "Socket.h"
 #include <cstring>
+#include <chrono>
+#include <thread>
+
+#include <iostream>
 
 Socket::Socket(std::string &host_name, std::string &port_number) {
     this->host_name = host_name;
@@ -17,14 +21,18 @@ Socket::~Socket() {
 
 std::string Socket::recieve_http_msg_headers() {
     std::string http_headers;
-    std::string temp_read_buffer(MAX_BUFFER_SIZE, '\0');
+    
     if (!read_http_headers_from_buffer(http_headers)) {
         bool http_headers_found = false;
         while (!http_headers_found) {
+            std::string temp_read_buffer(MAX_BUFFER_SIZE, '\0');
             ssize_t bytes_recieved = recv(socket_fd, &temp_read_buffer[0], 
                     MAX_BUFFER_SIZE, 0);
             if (bytes_recieved < 0) {
                 // Error
+            }
+            while (temp_read_buffer.empty()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(300));
             }
             socket_buffer += temp_read_buffer;
             http_headers_found = read_http_headers_from_buffer(http_headers);
@@ -118,19 +126,13 @@ void Socket::setup() {
 
 bool Socket::read_http_headers_from_buffer(std::string &output) {
     if (!socket_buffer.empty()) {
-        std::size_t delim_pos_buffer = socket_buffer.find("\r\n\r\n");
-        if (delim_pos_buffer != std::string::npos) {
-            output += socket_buffer.substr(0, delim_pos_buffer);
-            socket_buffer = socket_buffer.substr(delim_pos_buffer + 4);
+        output += socket_buffer;
+        std::size_t delim_pos_output = output.find("\r\n\r\n");
+        if (delim_pos_output != std::string::npos) {
+            socket_buffer = output.substr(delim_pos_output + 4);
+            output = output.substr(0, delim_pos_output);
             return true;
         } else {
-            output += socket_buffer; 
-            std::size_t delim_pos_output = output.find("\r\n\r\n");
-            if (delim_pos_output != std::string::npos) {
-                socket_buffer = output.substr(delim_pos_output + 4);
-                output = output.substr(0, delim_pos_output);
-                return true;
-            }
             socket_buffer.clear();
             return false;
         }
