@@ -14,6 +14,7 @@ using boost::filesystem::load_string_file;
 using boost::filesystem::save_string_file;
 
 HttpWorkerThread::HttpWorkerThread(int socket_fd, std::string &http_version, int timeout) {
+    done = false;
     this->socket = new Socket(socket_fd);
     this->timeout = timeout;
     this->http_version = http_version;
@@ -61,7 +62,10 @@ void HttpWorkerThread::handle_http_request(std::string &http_request) {
 
     if (request.get_request_method() == GET) {
         if (!exists(file_path)) {
-            response_code = "404 Not Found";
+            response_stream << http_version << ' ' << "404 Not Found" << "\r\n";
+            std::string response = response_stream.str();
+            socket->send_http_msg(response);
+            return;
         }
         response_stream << http_version << ' ' << response_code << "\r\n";
         time_t now;
@@ -105,29 +109,21 @@ std::string HttpWorkerThread::get_content_type(std::string url) {
 	std::string contentType;
     std::string extension = url.substr(url.find_last_of(".") + 1);
 
-	if (strutil::iequals(extension, "html")
-			== 0) {
+	if (strutil::iequals(extension, "html")) {
 		contentType = "text/html";
-	} else if (strutil::iequals(extension, "txt")
-			== 0) {
+	} else if (strutil::iequals(extension, "txt")) {
 		contentType = "text/txt";
-	} else if (strutil::iequals(extension, "css")
-			== 0) {
+	} else if (strutil::iequals(extension, "css")) {
 		contentType = "text/css";
-	} else if (strutil::iequals(extension, "js")
-			== 0) {
+	} else if (strutil::iequals(extension, "js")) {
 		contentType = "text/javascript";
-	}else if (strutil::iequals(extension, "png")
-			== 0) {
+	}else if (strutil::iequals(extension, "png")) {
 		contentType = "image/png";
-	} else if (strutil::iequals(extension, "jpg")
-			== 0) {
+	} else if (strutil::iequals(extension, "jpg")) {
 		contentType = "image/jpg";
-	} else if (strutil::iequals(extension, "jpeg")
-			== 0) {
+	} else if (strutil::iequals(extension, "jpeg")) {
 		contentType = "image/jpg";
-	} else if (strutil::iequals(extension, "gif")
-			== 0) {
+	} else if (strutil::iequals(extension, "gif")) {
 		contentType = "image/gif";
 	} else {
 		contentType = "text/txt";
