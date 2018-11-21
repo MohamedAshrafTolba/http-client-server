@@ -2,6 +2,7 @@
 #include "HttpRequest.h"
 #include "strutil.h"
 #include <sstream>
+#include <iostream>
 #include <boost/filesystem.hpp>
 
 using std::chrono::duration_cast;
@@ -44,6 +45,7 @@ void HttpWorkerThread::start() {
 void HttpWorkerThread::execute() {
     while (!done) {
         std::string headers = socket->recieve_http_msg_headers();
+        std::cout << "HEADERS ON SERVER END\n" << headers << "\n\n";
         handle_http_request(headers);
         auto now = steady_clock::now();
         int64_t time_diff = duration_cast<std::chrono::seconds>(now - start_time).count();

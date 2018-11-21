@@ -3,8 +3,6 @@
 #include <chrono>
 #include <thread>
 
-#include <iostream>
-
 Socket::Socket(std::string &host_name, std::string &port_number) {
     this->host_name = host_name;
     this->port_number = port_number;
@@ -21,7 +19,6 @@ Socket::~Socket() {
 
 std::string Socket::recieve_http_msg_headers() {
     std::string http_headers;
-    
     if (!read_http_headers_from_buffer(http_headers)) {
         bool http_headers_found = false;
         while (!http_headers_found) {
@@ -31,9 +28,9 @@ std::string Socket::recieve_http_msg_headers() {
             if (bytes_recieved < 0) {
                 // Error
             }
-            while (temp_read_buffer.empty()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(300));
-            }
+            // while (temp_read_buffer.empty()) {
+            //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            // }
             socket_buffer += temp_read_buffer;
             http_headers_found = read_http_headers_from_buffer(http_headers);
         }
