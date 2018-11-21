@@ -1,6 +1,7 @@
 #include "Client.h"
 #include <sstream>
 #include <fstream>
+#include <iostream>
 
 Client::Client(std::string &host, std::string &port,
     std::string &file_name, RequestMethod method, bool dry_run) {
@@ -32,6 +33,10 @@ std::string Client::get_response() {
         write_file(file_name, body);
     }
     return headers + body;
+}
+
+int Client::get_client_socket_fd() const {
+    return socket->get_socket_fd();
 }
 
 void Client::make_request() {

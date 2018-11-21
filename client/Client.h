@@ -13,6 +13,7 @@ class Client {
          std::string &file_name, RequestMethod method, bool dry_run = false);
         ~Client();
         std::string get_response();
+        int get_client_socket_fd() const;
     private:
         std::string read_file(std::string &file_name);
         void write_file(std::string &file_name, std::string &content);

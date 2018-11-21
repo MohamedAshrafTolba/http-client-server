@@ -5,7 +5,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#define MAX_BUFFER_SIZE 8192
+#define MAX_BUFFER_SIZE 10
 
 class Socket {
     public:
@@ -25,7 +25,9 @@ class Socket {
         std::string host_name;
         std::string port_number;  
         void setup();
-        bool read_socket_buffer(std::string &output);
+        bool read_http_headers_from_buffer(std::string &output);
+        bool read_http_body_from_buffer(std::string &output,
+                std::size_t http_body_size);
 };
 
 #endif

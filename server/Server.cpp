@@ -30,7 +30,6 @@ void Server::run() {
             sleep(2);
         }
 
-
         int connecting_socket_fd = server_socket->accept_connection();
 
         if (connecting_socket_fd == -1) {
@@ -53,4 +52,8 @@ unsigned short Server::get_backlog() const {
 
 unsigned long Server::get_max_workers() const {
     return max_workers;
+}
+
+int Server::get_server_socket_fd() const {
+    return server_socket->get_socket_fd();
 }

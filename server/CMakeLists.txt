@@ -2,7 +2,7 @@ cmake_minimum_required( VERSION 3.12 )
 
 project( http-server )
 
-set(CMAKE_CXX_STANDARD 11)
+set( CMAKE_CXX_STANDARD 11 )
 
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" )
 
@@ -12,7 +12,7 @@ set( SOURCES main.cpp Server.cpp ../HttpRequest.cpp ../HttpWorkerThread.cpp ../S
 
 find_package( Boost REQUIRED COMPONENTS system filesystem )
 
-find_package(Threads REQUIRED)
+find_package( Threads REQUIRED )
 
 add_executable( http-server ${HEADERS} ${SOURCES} )
 

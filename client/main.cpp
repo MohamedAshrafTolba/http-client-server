@@ -31,7 +31,9 @@ int main(int argc, char **argv) {
         } else if (strutil::iequals(method, "POST")) {
             req_method = POST;
         }
+        std::cout << "\n\nREQUEST\n\n";
         std::cout << method << " " << file_name << " " << host << " " << port << std::endl;
-        std::cout << Client(host, port, file_name, req_method, false).get_response() << "\n";
+        std::cout << "\n\nRESPONSE\n\n";
+        std::cout << Client(host, port, file_name, req_method, false).get_response() << std::endl;
     }
 }

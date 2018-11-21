@@ -4,7 +4,6 @@
 Socket::Socket(std::string &host_name, std::string &port_number) {
     this->host_name = host_name;
     this->port_number = port_number;
-    socket_buffer.resize(MAX_BUFFER_SIZE + 1, '\0');
     setup();
 }
 
@@ -18,44 +17,44 @@ Socket::~Socket() {
 
 std::string Socket::recieve_http_msg_headers() {
     std::string http_headers;
-    if (!read_socket_buffer(http_headers)) {
+    std::string temp_read_buffer(MAX_BUFFER_SIZE, '\0');
+    if (!read_http_headers_from_buffer(http_headers)) {
         bool http_headers_found = false;
         while (!http_headers_found) {
-            ssize_t bytes_recieved = recv(socket_fd, &socket_buffer[0], 
-                    MAX_BUFFER_SIZE, MSG_WAITALL);
+            ssize_t bytes_recieved = recv(socket_fd, &temp_read_buffer[0], 
+                    MAX_BUFFER_SIZE, 0);
             if (bytes_recieved < 0) {
                 // Error
             }
-            http_headers_found = read_socket_buffer(http_headers);
+            socket_buffer += temp_read_buffer;
+            http_headers_found = read_http_headers_from_buffer(http_headers);
         }
     }
-    http_headers += '\0';
     return http_headers;
 }
 
 std::string Socket::recieve_http_msg_body(std::size_t http_body_size) {
     std::string http_body;
-    if (!read_socket_buffer(http_body)) {
-        ssize_t bytes_recieved = recv(socket_fd, &http_body[0], 
-                http_body_size - http_body.length() + 4, MSG_WAITALL);
+    if (!read_http_body_from_buffer(http_body, http_body_size)) {
+        std::string temp_read_buffer(http_body_size - http_body.length(), '\0');
+        ssize_t bytes_recieved = recv(socket_fd, &temp_read_buffer[0], 
+                temp_read_buffer.length(), 0);
         if (bytes_recieved < 0) {
             // Error
         }
+        http_body += temp_read_buffer;
     }
-    http_body = http_body.substr(0, http_body.length() - 4);
-    http_body += '\0';
     return http_body;
 }
 
 std::size_t Socket::send_http_msg(std::string &message) {
-    std::string socket_write_buffer;
+    std::string temp_write_buffer;
     unsigned long i = 0;
     while (i < message.length()) {
-        socket_write_buffer = message.substr(i, 
+        temp_write_buffer = message.substr(i, 
                 std::min(MAX_BUFFER_SIZE, (int)(message.length() - i)));
-        
-        ssize_t bytes_sent = send(socket_fd, &socket_write_buffer[0], 
-                MAX_BUFFER_SIZE, 0);
+        ssize_t bytes_sent = send(socket_fd, temp_write_buffer.c_str(), 
+                temp_write_buffer.length(), 0);
         if (bytes_sent < 0) {
             // Error
         }
@@ -117,17 +116,40 @@ void Socket::setup() {
     }
 }
 
-bool Socket::read_socket_buffer(std::string &output) {
+bool Socket::read_http_headers_from_buffer(std::string &output) {
     if (!socket_buffer.empty()) {
-        std::size_t delim_pos = socket_buffer.find("\r\n\r\n");
-        if (delim_pos != std::string::npos) {
-            output += socket_buffer.substr(0, delim_pos);
-            socket_buffer = socket_buffer.substr(delim_pos + 4);
+        std::size_t delim_pos_buffer = socket_buffer.find("\r\n\r\n");
+        if (delim_pos_buffer != std::string::npos) {
+            output += socket_buffer.substr(0, delim_pos_buffer);
+            socket_buffer = socket_buffer.substr(delim_pos_buffer + 4);
             return true;
         } else {
+            output += socket_buffer; 
+            std::size_t delim_pos_output = output.find("\r\n\r\n");
+            if (delim_pos_output != std::string::npos) {
+                socket_buffer = output.substr(delim_pos_output + 4);
+                output = output.substr(0, delim_pos_output);
+                return true;
+            }
+            socket_buffer.clear();
+            return false;
+        }
+    } else {
+        return false;
+    }
+}
+
+bool Socket::read_http_body_from_buffer(std::string &output, 
+        std::size_t http_body_size) {
+    if (!socket_buffer.empty()) {
+        if (http_body_size > socket_buffer.length()) {
             output += socket_buffer;
             socket_buffer.clear();
             return false;
+        } else {
+            output = socket_buffer.substr(0, http_body_size);
+            socket_buffer = socket_buffer.substr(http_body_size + 1);
+            return true;
         }
     } else {
         return false;

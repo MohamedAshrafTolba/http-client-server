@@ -21,6 +21,7 @@ class Server {
         std::string get_port_number() const;
         unsigned short get_backlog() const;
         unsigned long get_max_workers() const;
+        int get_server_socket_fd() const;
     private:
         ServerSocket *server_socket;
         std::string port_number;
