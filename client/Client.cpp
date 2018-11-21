@@ -32,7 +32,7 @@ std::string Client::get_response() {
     if (!dry_run) {
         write_file(file_name, body);
     }
-    return headers + body;
+    return headers + "\r\n\r\n" + body;
 }
 
 int Client::get_client_socket_fd() const {

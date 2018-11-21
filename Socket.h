@@ -5,7 +5,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#define MAX_BUFFER_SIZE 10
+#define MAX_BUFFER_SIZE 8192
 
 class Socket {
     public:
