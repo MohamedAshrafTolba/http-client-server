@@ -43,7 +43,7 @@ std::string Socket::recieve_http_msg_body(std::size_t http_body_size) {
     if (!read_http_body_from_buffer(http_body, http_body_size)) {
         std::string temp_read_buffer(http_body_size - http_body.length(), '\0');
         ssize_t bytes_recieved = recv(socket_fd, &temp_read_buffer[0], 
-                temp_read_buffer.length(), 0);
+                temp_read_buffer.length(), MSG_WAITALL);
         if (bytes_recieved < 0) {
             // Error
         }
