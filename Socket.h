@@ -12,7 +12,7 @@ class Socket {
         Socket(std::string &host_name, std::string &port_number);
         Socket(int socket_fd);
         ~Socket();
-        std::string recieve_http_msg_headers();
+        std::string recieve_http_msg_headers(bool block = true);
         std::string recieve_http_msg_body(std::size_t http_body_size);
         std::size_t send_http_msg(std::string &message);
         int close();

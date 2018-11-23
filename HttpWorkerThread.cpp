@@ -15,6 +15,7 @@ using boost::filesystem::load_string_file;
 using boost::filesystem::save_string_file;
 
 HttpWorkerThread::HttpWorkerThread(int socket_fd, std::string &http_version, int timeout) {
+    std::cout << "Started new worker for socket: " << socket_fd << std::endl;
     done = false;
     this->socket = new Socket(socket_fd);
     this->timeout = timeout;
@@ -23,6 +24,7 @@ HttpWorkerThread::HttpWorkerThread(int socket_fd, std::string &http_version, int
 }
 
 HttpWorkerThread::~HttpWorkerThread(){
+    std::cout << "A worker just terminated" << std::endl; 
     if (worker != nullptr) {
         worker->join();
     }
@@ -44,15 +46,19 @@ void HttpWorkerThread::start() {
 
 void HttpWorkerThread::execute() {
     while (!done) {
-        std::string headers = socket->recieve_http_msg_headers();
-        std::cout << "HEADERS ON SERVER END\n" << headers << "\n\n";
-        handle_http_request(headers);
+        std::string headers = socket->recieve_http_msg_headers(false);
+        if (!headers.empty()) {
+             std::cout << "HEADERS ON SERVER END\n" << headers << "\n\n";
+            handle_http_request(headers);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
         auto now = steady_clock::now();
         int64_t time_diff = duration_cast<std::chrono::seconds>(now - start_time).count();
         if (time_diff >= timeout) {
             done = true;
         }
-    }    
+    }
+    std::cout << "A worker just timed out" << std::endl; 
 }
 
 void HttpWorkerThread::handle_http_request(std::string &http_request) {

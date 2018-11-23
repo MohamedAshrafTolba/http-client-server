@@ -1,5 +1,6 @@
 #include "Server.h"
 #include <cmath>
+#include <iostream>
 
 Server::Server(std::string &port_number, unsigned short backlog, unsigned long max_workers) {
     this->port_number = port_number;
@@ -14,18 +15,31 @@ Server::~Server() {
 
 void Server::run() {
     std::string http_version(HTTP_VERSION);
+    std::mutex pool_mutex;
+    
+    auto f = [&] {
+        while (true) {
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+            pool_mutex.lock();
+            std::cout << "gc lock acquired" << std::endl;
+            for (auto it = workers_pool.begin(); it < workers_pool.end();) {
+                HttpWorkerThread *worker = *it;
+                if (worker != nullptr && worker->is_done()) {
+                    delete worker;
+                    it = workers_pool.erase(it);
+                } else {
+                    it++;
+                }
+            }
+            pool_mutex.unlock();
+            std::cout << "gc lock released" << std::endl;
+        }   
+    };
+    
+    std::thread gc(f);
+
     while (true) {
         
-        for (auto it = workers_pool.begin(); it < workers_pool.end();) {
-            HttpWorkerThread *worker = *it;
-            if (worker != nullptr && worker->is_done()) {
-                delete worker;
-                it = workers_pool.erase(it);
-            } else {
-                it++;
-            }
-        }
-
         while (workers_pool.size() >= max_workers) {
             sleep(2);
         }
@@ -38,8 +52,14 @@ void Server::run() {
 
         int timeout = TIMEOUT - floor(0.01 * TIMEOUT * workers_pool.size());
         HttpWorkerThread *worker = new HttpWorkerThread(connecting_socket_fd, http_version, timeout);
+        pool_mutex.lock();
+        std::cout << "listener lock acquired" << std::endl;
         workers_pool.push_back(worker);
+        pool_mutex.unlock();
+        std::cout << "listener lock released" << std::endl;
     }
+
+    gc.join();
 }
 
 std::string Server::get_port_number() const {

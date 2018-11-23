@@ -9,7 +9,7 @@
 #include "../Socket.h"
 #include "../HttpWorkerThread.h"
 
-#define TIMEOUT 30
+#define TIMEOUT 5
 #define SERVER_NAME "dummy"
 #define HTTP_VERSION "HTTP/1.1"
 

@@ -17,7 +17,7 @@ Socket::~Socket() {
     close();
 }
 
-std::string Socket::recieve_http_msg_headers() {
+std::string Socket::recieve_http_msg_headers(bool block) {
     std::string http_headers;
     if (!read_http_headers_from_buffer(http_headers)) {
         bool http_headers_found = false;
@@ -28,11 +28,11 @@ std::string Socket::recieve_http_msg_headers() {
             if (bytes_recieved < 0) {
                 // Error
             }
-            // while (temp_read_buffer.empty()) {
-            //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            // }
             socket_buffer += temp_read_buffer;
             http_headers_found = read_http_headers_from_buffer(http_headers);
+            if (!block) {
+                return http_headers_found ? http_headers : "";
+            }
         }
     }
     return http_headers;
