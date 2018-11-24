@@ -2,56 +2,59 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
+#include "../strutil.h"
 
-Client::Client(std::string &host, std::string &port,
-    std::string &file_name, RequestMethod method, bool dry_run) {
-    
-    socket = new Socket(host, port);
-    this->file_name = file_name;
-    this->method = method;
+Client::Client(std::string &host_name, std::string &port_number,
+        std::string &requests_file, bool dry_run) {
+    socket = new Socket(host_name, port_number);
+    this->requests_file = requests_file;
     this->dry_run = dry_run;
 }
 
 Client::~Client() {
     if (socket != nullptr) {
-        socket->close();
+        delete socket;
     }
-    delete socket;
 }
 
-std::string Client::get_response() {
-    this->make_request();
-    std::string headers = socket->recieve_http_msg_headers();
-    if (method != GET) {
-        return headers;
+void Client::run() {
+    std::ifstream requests_file_stream(requests_file);
+    std::string request;
+    while (std::getline(requests_file_stream, request)) {
+        std::stringstream split_stream(request);
+        std::string method, file_name;
+        split_stream >> method;
+        if (!split_stream.eof() && split_stream.tellg() != -1) {
+            split_stream >> file_name;
+        } else {
+            perror("Skipping a request: File name is missing");
+            continue;
+        }
+        RequestMethod req_method = NOP;
+        if (strutil::iequals(method, "GET")) {
+            req_method = GET;
+        } else if (strutil::iequals(method, "POST")) {
+            req_method = POST;
+        }
+        make_request(req_method, file_name);
+        if (req_method == POST) {
+            get_response();
+        } else {
+            // add request method and file name to queue or something for the other thread.
+        }
     }
-    HttpRequest request(headers); // Hacky implementation to parse the options
-    std::string content_length_str = request.get_options()["Content-Length"];
-    int content_length = atoi(content_length_str.c_str());
-    std::string body = socket->recieve_http_msg_body(content_length);
-    if (!dry_run) {
-        write_file(file_name, body);
-    }
-    return headers + "\r\n\r\n" + body;
 }
 
 int Client::get_client_socket_fd() const {
     return socket->get_socket_fd();
 }
 
-void Client::make_request() {
-    std::stringstream request_stream;
-    const static std::string req_method[] = {"GET", "POST", "INVALID"};
-    request_stream << req_method[method] << ' ' << file_name << ' ' << HTTP_VERSION << "\r\n";
-    if (method == POST) {
-        std::string file_contents = read_file(file_name);
-        request_stream << "Content-Length: " << file_contents.size() << "\r\n\r\n";
-        request_stream << file_contents;
-    } else {
-        request_stream << "\r\n";
-    }
-    std::string request = request_stream.str();
-    socket->send_http_msg(request);
+std::string Client::get_requests_file() const {
+    return requests_file;
+}
+
+bool Client::is_dry_run() const {
+    return dry_run;
 }
 
 std::string Client::read_file(std::string &file_name) {
@@ -67,4 +70,23 @@ void Client::write_file(std::string &file_name, std::string &contents) {
     std::ofstream output_stream(file_path);
     output_stream << contents;
     output_stream.close();
+}
+
+void Client::make_request(RequestMethod method, std::string &file_name) {
+    std::stringstream request_stream;
+    const static std::string req_method[] = {"GET", "POST", "INVALID"};
+    request_stream << req_method[method] << ' ' << file_name << ' ' << HTTP_VERSION << "\r\n";
+    if (method == POST) {
+        std::string file_contents = read_file(file_name);
+        request_stream << "Content-Length: " << file_contents.size() << "\r\n\r\n";
+        request_stream << file_contents;
+    } else {
+        request_stream << "\r\n";
+    }
+    std::string request = request_stream.str();
+    socket->send_http_msg(request);
+}
+
+std::string Client::get_response() {
+    // todo
 }

@@ -9,18 +9,20 @@
 
 class Client {
     public:
-        Client(std::string &host, std::string &port,
-         std::string &file_name, RequestMethod method, bool dry_run = false);
+        Client(std::string &host_name, std::string &port_number,
+                std::string &requests_file, bool dry_run = false);
         ~Client();
-        std::string get_response();
+        void run();
         int get_client_socket_fd() const;
+        std::string get_requests_file() const;
+        bool is_dry_run() const;
     private:
         std::string read_file(std::string &file_name);
         void write_file(std::string &file_name, std::string &content);
-        void make_request();
+        void make_request(RequestMethod method, std::string &file_name);
+        std::string get_response();
         Socket *socket;
-        std::string file_name;
-        RequestMethod method;
+        std::string requests_file;
         bool dry_run;
 };
 
