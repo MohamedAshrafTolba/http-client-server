@@ -48,7 +48,7 @@ void HttpWorkerThread::execute() {
     while (!done) {
         std::string headers = socket->recieve_http_msg_headers(false);
         if (!headers.empty()) {
-             std::cout << "HEADERS ON SERVER END\n" << headers << "\n\n";
+             std::cout << "\n\nHeaders of Recieved Request\n" << headers << "\n\n";
             handle_http_request(headers);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
