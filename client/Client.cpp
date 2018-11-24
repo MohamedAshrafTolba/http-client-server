@@ -27,9 +27,9 @@ void Client::run() {
     bool running = true;
     auto f = [&] {
         running_mutex.lock();
-        pipelined_requests_mutex.lock();
-        while (running && !pipelined_requests.empty()) {
+        while (running) {
             running_mutex.unlock();
+            pipelined_requests_mutex.lock();
             if (pipelined_requests.empty()) {
                 pipelined_requests_mutex.unlock();
                 std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -40,6 +40,14 @@ void Client::run() {
                 std::cout << file_name << ":\n" << get_response(GET, file_name);
             }
         }
+        pipelined_requests_mutex.lock();
+        while (!pipelined_requests.empty()) {
+            std::string file_name = pipelined_requests.front();
+            pipelined_requests.pop();
+            pipelined_requests_mutex.unlock();
+            std::cout << file_name << ":\n" << get_response(GET, file_name);
+        }
+        pipelined_requests_mutex.unlock();
     };
 
     std::thread pipelining_thread(f);
