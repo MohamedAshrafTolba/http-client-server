@@ -4,6 +4,7 @@
 #include <iostream>
 #include <thread>
 #include <mutex>
+#include <sys/stat.h>
 #include <condition_variable>
 #include "../strutil.h"
 
@@ -22,10 +23,22 @@ Client::~Client() {
 
 void Client::run() {
     std::mutex pipelined_requests_mutex;
-
+    std::mutex running_mutex;
+    bool running = true;
     auto f = [&] {
-        while (true) {
-            // todo
+        running_mutex.lock();
+        pipelined_requests_mutex.lock();
+        while (running && !pipelined_requests.empty()) {
+            running_mutex.unlock();
+            if (pipelined_requests.empty()) {
+                pipelined_requests_mutex.unlock();
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+            } else {
+                std::string file_name = pipelined_requests.front();
+                pipelined_requests.pop();
+                pipelined_requests_mutex.unlock();
+                std::cout << file_name << ":\n" << get_response(GET, file_name);
+            }
         }
     };
 
@@ -34,6 +47,9 @@ void Client::run() {
     std::ifstream requests_file_stream(requests_file);
     std::string request;
     while (std::getline(requests_file_stream, request)) {
+        if (request.empty()) {
+            continue;
+        }
         std::stringstream split_stream(request);
         std::string method, file_name;
         split_stream >> method;
@@ -51,13 +67,16 @@ void Client::run() {
         }
         make_request(req_method, file_name);
         if (req_method == POST) {
-            get_response(); // todo check this function 
+            get_response(POST, file_name);
         } else {
             pipelined_requests_mutex.lock();
             pipelined_requests.push(file_name);
             pipelined_requests_mutex.unlock();
         }
     }
+    running_mutex.lock();
+    running = false;
+    running_mutex.unlock();
 
     pipelining_thread.join();
 }
@@ -82,6 +101,13 @@ std::string Client::read_file(std::string &file_name) {
     return contents;
 }
 
+long Client::get_file_size(std::string filename)
+{
+    struct stat stat_buf;
+    int rc = stat(filename.c_str(), &stat_buf);
+    return rc == 0 ? stat_buf.st_size : -1;
+}
+
 void Client::write_file(std::string &file_name, std::string &contents) {
     std::string file_path = "." + file_name;
     std::ofstream output_stream(file_path);
@@ -94,9 +120,8 @@ void Client::make_request(RequestMethod method, std::string &file_name) {
     const static std::string req_method[] = {"GET", "POST", "INVALID"};
     request_stream << req_method[method] << ' ' << file_name << ' ' << HTTP_VERSION << "\r\n";
     if (method == POST) {
-        std::string file_contents = read_file(file_name);
-        request_stream << "Content-Length: " << file_contents.size() << "\r\n\r\n";
-        request_stream << file_contents;
+        request_stream << "Content-Length: " << get_file_size("." + file_name) << "\r\n\r\n";
+        
     } else {
         request_stream << "\r\n";
     }
@@ -104,6 +129,22 @@ void Client::make_request(RequestMethod method, std::string &file_name) {
     socket->send_http_msg(request);
 }
 
-std::string Client::get_response() {
-    // todo
+std::string Client::get_response(RequestMethod method, std::string &file_name) {
+    std::string headers = socket->recieve_http_msg_headers();
+    std::string file_path = "." + file_name;
+    if (method == POST) {
+        if (headers.find("200 OK") != std::string::npos) {
+            std::string file_contents = read_file(file_path);
+            socket->send_http_msg(file_contents);
+        }
+        return headers;
+    }
+    HttpRequest request(headers); // Hacky implementation to parse the options
+    std::string content_length_str = request.get_options()["Content-Length"];
+    int content_length = atoi(content_length_str.c_str());
+    std::string body = socket->recieve_http_msg_body(content_length);
+    if (!dry_run) {
+        write_file(file_name, body);
+    }
+    return headers + "\r\n\r\n" + body;
 }

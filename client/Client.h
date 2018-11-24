@@ -21,7 +21,8 @@ class Client {
         std::string read_file(std::string &file_name);
         void write_file(std::string &file_name, std::string &content);
         void make_request(RequestMethod method, std::string &file_name);
-        std::string get_response();
+        std::string get_response(RequestMethod method, std::string &file_name);
+        long get_file_size(std::string filename);
         Socket *socket;
         std::queue<std::string> pipelined_requests;
         std::string requests_file;
