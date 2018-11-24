@@ -2,6 +2,7 @@
 #define CLIENT_H
 
 #include <string>
+#include <queue>
 #include "../Socket.h"
 #include "../HttpRequest.h"
 
@@ -22,6 +23,7 @@ class Client {
         void make_request(RequestMethod method, std::string &file_name);
         std::string get_response();
         Socket *socket;
+        std::queue<std::string> pipelined_requests;
         std::string requests_file;
         bool dry_run;
 };

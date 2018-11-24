@@ -2,6 +2,9 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 #include "../strutil.h"
 
 Client::Client(std::string &host_name, std::string &port_number,
@@ -18,6 +21,21 @@ Client::~Client() {
 }
 
 void Client::run() {
+    std::mutex pipelined_requests_mutex;
+    std::condition_variable pipelined_requests_cond_var;
+
+    auto f = [&] {
+        while (true) {
+            pipelined_requests_mutex.lock();
+            pipelined_requests_cond_var.wait(pipelined_requests_mutex, [] {
+                return !pipelined_requests.empty();
+            });
+            // todo pop from the queue and pass this file_name to get_response()
+        }
+    };
+
+    std::thread pipelining_thread(f);
+
     std::ifstream requests_file_stream(requests_file);
     std::string request;
     while (std::getline(requests_file_stream, request)) {
@@ -27,7 +45,7 @@ void Client::run() {
         if (!split_stream.eof() && split_stream.tellg() != -1) {
             split_stream >> file_name;
         } else {
-            perror("Skipping a request: File name is missing");
+            perror("Skipping request: File name is missing");
             continue;
         }
         RequestMethod req_method = NOP;
@@ -38,11 +56,16 @@ void Client::run() {
         }
         make_request(req_method, file_name);
         if (req_method == POST) {
-            get_response();
+            get_response(); // todo check this function 
         } else {
-            // add request method and file name to queue or something for the other thread.
+            pipelined_requests_mutex.lock();
+            pipelined_requests.push_back(file_name);
+            pipelined_requests_mutex.unlock();
+            pipelined_requests_cond_var.notify_one()
         }
     }
+
+    pipelining_thread.join();
 }
 
 int Client::get_client_socket_fd() const {
