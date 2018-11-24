@@ -22,15 +22,10 @@ Client::~Client() {
 
 void Client::run() {
     std::mutex pipelined_requests_mutex;
-    std::condition_variable pipelined_requests_cond_var;
 
     auto f = [&] {
         while (true) {
-            pipelined_requests_mutex.lock();
-            pipelined_requests_cond_var.wait(pipelined_requests_mutex, [] {
-                return !pipelined_requests.empty();
-            });
-            // todo pop from the queue and pass this file_name to get_response()
+            // todo
         }
     };
 
@@ -59,9 +54,8 @@ void Client::run() {
             get_response(); // todo check this function 
         } else {
             pipelined_requests_mutex.lock();
-            pipelined_requests.push_back(file_name);
+            pipelined_requests.push(file_name);
             pipelined_requests_mutex.unlock();
-            pipelined_requests_cond_var.notify_one()
         }
     }
 
