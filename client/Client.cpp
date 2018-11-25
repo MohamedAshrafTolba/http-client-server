@@ -44,7 +44,6 @@ void Client::run() {
         while (!pipelined_requests.empty()) {
             std::string file_name = pipelined_requests.front();
             pipelined_requests.pop();
-            pipelined_requests_mutex.unlock();
             std::cout << file_name << ":\n" << get_response(GET, file_name);
         }
         pipelined_requests_mutex.unlock();
@@ -134,15 +133,18 @@ void Client::make_request(RequestMethod method, std::string &file_name) {
         request_stream << "\r\n";
     }
     std::string request = request_stream.str();
+    std::cout << "Req Length: " << request.length() << "\n";
     socket->send_http_msg(request);
 }
 
 std::string Client::get_response(RequestMethod method, std::string &file_name) {
     std::string headers = socket->recieve_http_msg_headers();
+    std::cout << headers;
     std::string file_path = "." + file_name;
     if (method == POST) {
+        std::cout << headers << std::endl;
         if (headers.find("200 OK") != std::string::npos) {
-            std::string file_contents = read_file(file_path);
+            std::string file_contents = read_file(file_name);
             socket->send_http_msg(file_contents);
         }
         return headers;
@@ -150,7 +152,9 @@ std::string Client::get_response(RequestMethod method, std::string &file_name) {
     HttpRequest request(headers); // Hacky implementation to parse the options
     std::string content_length_str = request.get_options()["Content-Length"];
     int content_length = atoi(content_length_str.c_str());
+    std::cout << "EXPECTED BUDLEN: " << content_length << std::endl;
     std::string body = socket->recieve_http_msg_body(content_length);
+    std::cout << "BUDLEN: " << body.length() << std::endl;
     if (!dry_run) {
         write_file(file_name, body);
     }

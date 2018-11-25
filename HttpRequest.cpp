@@ -50,16 +50,20 @@ void HttpRequest::parse(std::string &request) {
             int idx = 0;
             for (std::string field : fields) {
                 idx++;
+                trim(field);
                 switch(idx) {
                 case 1:
-                if (strutil::iequals(field, std::string("GET"))) {
-                    method = GET;
-                } else if (strutil::iequals(field, std::string("POST"))) {
-                    method = POST;
-                } else {
-                    method = NOP;
-                }
-                break;
+                    std::cout << field << std::endl;
+                    if (strutil::iequals(field, std::string("GET"))) {
+                        method = GET;
+                    } else if (strutil::iequals(field, std::string("POST"))) {
+                        std::cout << "post" << std::endl;
+                        method = POST;
+                    } else {
+                        std::cout << "wtf" << std::endl;
+                        method = NOP;
+                    }
+                    break;
                 case 2:
                     file_url = field;
                     break;

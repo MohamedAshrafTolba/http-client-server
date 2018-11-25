@@ -1,12 +1,10 @@
 #include "strutil.h"
 #include <cstring>
+#include <iostream>
+#include <boost/algorithm/string/predicate.hpp>
 
 bool strutil::iequals(std::string a, std::string b) {
-    return std::equal(a.begin(), a.end(), b.begin(),
-    [] (const char& a, const char& b)
-    {
-        return (std::tolower(a) == std::tolower(b));
-    });
+    return boost::iequals(a, b);
 }
 
 char *strutil::time_cstr(time_t *t) {
