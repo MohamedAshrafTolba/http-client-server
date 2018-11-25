@@ -46,12 +46,9 @@ void HttpWorkerThread::start() {
 
 void HttpWorkerThread::execute() {
     while (!done) {
-        // std::cout << "-----\nTRYING TO GET HEADERS--------\n";
         std::string headers = socket->recieve_http_msg_headers(false);
-        // std::cout << "-----\n GOT HEADERS --------\n";
         if (!headers.empty()) {
             std::cout << "\n\nHeaders of Recieved Request\n" << headers << "\n\n";
-            std::cout << "Headers Length: " << headers.length() << "\n";
             handle_http_request(headers);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
@@ -70,11 +67,10 @@ void HttpWorkerThread::handle_http_request(std::string &http_request) {
     std::string file_name = "." + request.get_file_url();
     path file_path = path(file_name);
     std::string response_code = "200 OK";
-    std::cout << request.get_request_method() << std::endl;
     
     if (request.get_request_method() == GET) {
         if (!exists(file_path)) {
-            response_stream << http_version << ' ' << "404 Not Found" << "\r\n";
+            response_stream << http_version << ' ' << "404 Not Found" << "\r\n\r\n";
             std::string response = response_stream.str();
             socket->send_http_msg(response);
             return;
@@ -114,7 +110,6 @@ void HttpWorkerThread::handle_http_request(std::string &http_request) {
             std::cout << "Sent Response:\n" << response << std::endl;
             
             std::string body = socket->recieve_http_msg_body(length);
-            // std::cout << "Received Body:\n" << body << std::endl;
             save_string_file(file_path, body);
         }
     }

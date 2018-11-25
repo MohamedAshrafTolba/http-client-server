@@ -53,7 +53,6 @@ void HttpRequest::parse(std::string &request) {
                 trim(field);
                 switch(idx) {
                 case 1:
-                    std::cout << field << " (" << field.length() << ")" << "\n\n";
                     if (strutil::iequals(field, std::string("GET"))) {
                         method = GET;
                     } else if (strutil::iequals(field, std::string("POST"))) {

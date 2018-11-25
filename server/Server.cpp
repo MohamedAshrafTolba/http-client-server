@@ -21,7 +21,6 @@ void Server::run() {
         while (true) {
             std::this_thread::sleep_for(std::chrono::seconds(5));
             pool_mutex.lock();
-            std::cout << "gc lock acquired" << std::endl;
             for (auto it = workers_pool.begin(); it < workers_pool.end();) {
                 HttpWorkerThread *worker = *it;
                 if (worker != nullptr && worker->is_done()) {
@@ -32,7 +31,6 @@ void Server::run() {
                 }
             }
             pool_mutex.unlock();
-            std::cout << "gc lock released" << std::endl;
         }   
     };
     
@@ -53,10 +51,8 @@ void Server::run() {
         int timeout = TIMEOUT - floor(0.01 * TIMEOUT * workers_pool.size());
         HttpWorkerThread *worker = new HttpWorkerThread(connecting_socket_fd, http_version, timeout);
         pool_mutex.lock();
-        std::cout << "listener lock acquired" << std::endl;
         workers_pool.push_back(worker);
         pool_mutex.unlock();
-        std::cout << "listener lock released" << std::endl;
     }
 
     gc.join();

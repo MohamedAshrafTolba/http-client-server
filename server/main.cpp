@@ -2,8 +2,8 @@
 
 #include "Server.h"
 
-#define BACKLOG 10
-#define MAX_WORKERS 10
+#define BACKLOG 1000
+#define MAX_WORKERS 1000
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {

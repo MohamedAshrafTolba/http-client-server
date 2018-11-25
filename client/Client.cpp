@@ -40,7 +40,6 @@ void Client::run() {
                 pipelined_requests_mutex.unlock();
                 socket_mutex.lock();
                 get_response(GET, file_name);
-                // std::cout << file_name << ":\n" << get_response(GET, file_name) << "\n\n";
                 socket_mutex.unlock();
             }
         }
@@ -50,7 +49,6 @@ void Client::run() {
             pipelined_requests.pop();
             socket_mutex.lock();
             get_response(GET, file_name);
-            // std::cout << file_name << ":\n" << get_response(GET, file_name) << "\n\n";
             socket_mutex.unlock();
         }
         pipelined_requests_mutex.unlock();
@@ -175,7 +173,6 @@ std::string Client::get_response(RequestMethod method, std::string &file_name) {
     std::string content_length_str = request.get_options()["Content-Length"];
     int content_length = atoi(content_length_str.c_str());
     std::string body = socket->recieve_http_msg_body(content_length);
-    // std::cout << body << "--------------------------------------------------\n\n";
     if (!dry_run) {
         write_file(file_name, body);
     }

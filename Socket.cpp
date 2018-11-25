@@ -24,12 +24,9 @@ std::string Socket::recieve_http_msg_headers(bool block) {
         bool http_headers_found = false;
         while (!http_headers_found) {
             std::string temp_read_buffer(MAX_BUFFER_SIZE, '\0');
-            // std::cout << "-----\nTRYING TO RECV--------\n";
             ssize_t bytes_recieved = recv(socket_fd, &temp_read_buffer[0], 
                     MAX_BUFFER_SIZE, 0);
-            // std::cout << "-----\n SUCCESSFUL RECV --------\n";
             if (bytes_recieved <= 0) {
-                // std::cout << "REC HEADERS ERROR\n";
                 temp_read_buffer = "";
             } else {
                 temp_read_buffer = temp_read_buffer.substr(0, bytes_recieved);
@@ -37,10 +34,7 @@ std::string Socket::recieve_http_msg_headers(bool block) {
             socket_buffer = temp_read_buffer;
             http_headers_found = read_http_headers_from_buffer(http_headers);
             
-        // std::cout << "-----\n CHECKING BLOCK --------\n";
             if (!block) {
-
-        // std::cout << "-----\n NOT BLOCKING --------\n";
                 return http_headers_found ? http_headers : "";
             }
         }
