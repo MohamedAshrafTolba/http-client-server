@@ -24,6 +24,7 @@ Client::~Client() {
 void Client::run() {
     std::mutex pipelined_requests_mutex;
     std::mutex running_mutex;
+    std::mutex socket_mutex;
     bool running = true;
     auto f = [&] {
         running_mutex.lock();
@@ -37,19 +38,25 @@ void Client::run() {
                 std::string file_name = pipelined_requests.front();
                 pipelined_requests.pop();
                 pipelined_requests_mutex.unlock();
-                std::cout << file_name << ":\n" << get_response(GET, file_name);
+                socket_mutex.lock();
+                get_response(GET, file_name);
+                // std::cout << file_name << ":\n" << get_response(GET, file_name) << "\n\n";
+                socket_mutex.unlock();
             }
         }
         pipelined_requests_mutex.lock();
         while (!pipelined_requests.empty()) {
             std::string file_name = pipelined_requests.front();
             pipelined_requests.pop();
-            std::cout << file_name << ":\n" << get_response(GET, file_name);
+            socket_mutex.lock();
+            get_response(GET, file_name);
+            // std::cout << file_name << ":\n" << get_response(GET, file_name) << "\n\n";
+            socket_mutex.unlock();
         }
         pipelined_requests_mutex.unlock();
     };
 
-    std::thread pipelining_thread(f);
+    std::thread *pipelining_thread = nullptr;
 
     std::ifstream requests_file_stream(requests_file);
     std::string request;
@@ -72,10 +79,27 @@ void Client::run() {
         } else if (strutil::iequals(method, "POST")) {
             req_method = POST;
         }
-        make_request(req_method, file_name);
         if (req_method == POST) {
+            if (pipelining_thread) {
+                running_mutex.lock();
+                running = false;
+                running_mutex.unlock();
+                pipelining_thread->join();
+                delete pipelining_thread;
+                pipelining_thread = nullptr;
+            }
+            socket_mutex.lock();
+            make_request(req_method, file_name);
             get_response(POST, file_name);
+            socket_mutex.unlock();
         } else {
+            if (!pipelining_thread) {
+                running = true;
+                pipelining_thread = new std::thread(f);
+            }
+            socket_mutex.lock();
+            make_request(req_method, file_name);
+            socket_mutex.unlock();
             pipelined_requests_mutex.lock();
             pipelined_requests.push(file_name);
             pipelined_requests_mutex.unlock();
@@ -85,7 +109,7 @@ void Client::run() {
     running = false;
     running_mutex.unlock();
 
-    pipelining_thread.join();
+    pipelining_thread->join();
 }
 
 int Client::get_client_socket_fd() const {
@@ -133,16 +157,14 @@ void Client::make_request(RequestMethod method, std::string &file_name) {
         request_stream << "\r\n";
     }
     std::string request = request_stream.str();
-    std::cout << "Req Length: " << request.length() << "\n";
     socket->send_http_msg(request);
 }
 
 std::string Client::get_response(RequestMethod method, std::string &file_name) {
     std::string headers = socket->recieve_http_msg_headers();
-    std::cout << headers;
+    std::cout << file_name << "\n-----------------------\n" << headers <<"\n----------------------------\n";
     std::string file_path = "." + file_name;
     if (method == POST) {
-        std::cout << headers << std::endl;
         if (headers.find("200 OK") != std::string::npos) {
             std::string file_contents = read_file(file_name);
             socket->send_http_msg(file_contents);
@@ -152,9 +174,8 @@ std::string Client::get_response(RequestMethod method, std::string &file_name) {
     HttpRequest request(headers); // Hacky implementation to parse the options
     std::string content_length_str = request.get_options()["Content-Length"];
     int content_length = atoi(content_length_str.c_str());
-    std::cout << "EXPECTED BUDLEN: " << content_length << std::endl;
     std::string body = socket->recieve_http_msg_body(content_length);
-    std::cout << "BUDLEN: " << body.length() << std::endl;
+    // std::cout << body << "--------------------------------------------------\n\n";
     if (!dry_run) {
         write_file(file_name, body);
     }

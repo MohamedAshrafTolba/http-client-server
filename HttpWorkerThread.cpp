@@ -46,7 +46,9 @@ void HttpWorkerThread::start() {
 
 void HttpWorkerThread::execute() {
     while (!done) {
+        // std::cout << "-----\nTRYING TO GET HEADERS--------\n";
         std::string headers = socket->recieve_http_msg_headers(false);
+        // std::cout << "-----\n GOT HEADERS --------\n";
         if (!headers.empty()) {
             std::cout << "\n\nHeaders of Recieved Request\n" << headers << "\n\n";
             std::cout << "Headers Length: " << headers.length() << "\n";

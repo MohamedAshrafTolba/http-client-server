@@ -24,14 +24,23 @@ std::string Socket::recieve_http_msg_headers(bool block) {
         bool http_headers_found = false;
         while (!http_headers_found) {
             std::string temp_read_buffer(MAX_BUFFER_SIZE, '\0');
+            // std::cout << "-----\nTRYING TO RECV--------\n";
             ssize_t bytes_recieved = recv(socket_fd, &temp_read_buffer[0], 
                     MAX_BUFFER_SIZE, 0);
-            if (bytes_recieved < 0) {
-                std::cout << "REC HEADERS ERROR\n";
+            // std::cout << "-----\n SUCCESSFUL RECV --------\n";
+            if (bytes_recieved <= 0) {
+                // std::cout << "REC HEADERS ERROR\n";
+                temp_read_buffer = "";
+            } else {
+                temp_read_buffer = temp_read_buffer.substr(0, bytes_recieved);
             }
-            socket_buffer += temp_read_buffer;
+            socket_buffer = temp_read_buffer;
             http_headers_found = read_http_headers_from_buffer(http_headers);
+            
+        // std::cout << "-----\n CHECKING BLOCK --------\n";
             if (!block) {
+
+        // std::cout << "-----\n NOT BLOCKING --------\n";
                 return http_headers_found ? http_headers : "";
             }
         }
@@ -40,13 +49,17 @@ std::string Socket::recieve_http_msg_headers(bool block) {
 }
 
 std::string Socket::recieve_http_msg_body(std::size_t http_body_size) {
-    std::string temp_read_buffer(http_body_size, '\0');
-    ssize_t bytes_recieved = recv(socket_fd,  &temp_read_buffer[0], 
-            temp_read_buffer.length(), MSG_WAITALL);
-    if (bytes_recieved < 0) {
-        std::cout << "REC BODY ERROR\n";
+    std::string http_body;
+    if (!read_http_body_from_buffer(http_body, http_body_size)) {
+        std::string temp_read_buffer(http_body_size - http_body.length(), '\0');
+        ssize_t bytes_recieved = recv(socket_fd, &temp_read_buffer[0], 
+                temp_read_buffer.length(), MSG_WAITALL);
+        if (bytes_recieved < 0) {
+            // Error
+        }
+        http_body += temp_read_buffer;
     }
-    return temp_read_buffer;
+    return http_body;
 }
 
 std::size_t Socket::send_http_msg(std::string &message) {
@@ -114,11 +127,11 @@ bool Socket::read_http_headers_from_buffer(std::string &output) {
         std::size_t delim_pos_output = output.find("\r\n\r\n");
         if (delim_pos_output != std::string::npos) {
             size_t i = delim_pos_output + 4;
-            for (; i < socket_buffer.length(); i++) {
-                if (isalpha(socket_buffer[i])) {
-                    break;
-                }
-            }
+            // for (; i < socket_buffer.length(); i++) {
+            //     if (isalpha(socket_buffer[i])) {
+            //         break;
+            //     }
+            // }
             socket_buffer = output.substr(i);
             output = output.substr(0, delim_pos_output);
             return true;
@@ -139,8 +152,11 @@ bool Socket::read_http_body_from_buffer(std::string &output,
             socket_buffer.clear();
             return false;
         } else {
+            size_t sz = socket_buffer.length();
             output = socket_buffer.substr(0, http_body_size);
-            socket_buffer = socket_buffer.substr(http_body_size + 1);
+            if (http_body_size < sz) {
+                socket_buffer = socket_buffer.substr(http_body_size + 1);
+            }
             return true;
         }
     } else {
