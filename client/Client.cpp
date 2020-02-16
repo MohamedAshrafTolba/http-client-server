@@ -159,7 +159,7 @@ void Client::make_request(RequestMethod method, std::string &file_name) {
 }
 
 std::string Client::get_response(RequestMethod method, std::string &file_name) {
-    std::string headers = socket->recieve_http_msg_headers();
+    std::string headers = socket->receive_http_msg_headers();
     std::cout << file_name << "\n-----------------------\n" << headers <<"\n----------------------------\n";
     std::string file_path = "." + file_name;
     if (method == POST) {
@@ -172,7 +172,7 @@ std::string Client::get_response(RequestMethod method, std::string &file_name) {
     HttpRequest request(headers); // Hacky implementation to parse the options
     std::string content_length_str = request.get_options()["Content-Length"];
     int content_length = atoi(content_length_str.c_str());
-    std::string body = socket->recieve_http_msg_body(content_length);
+    std::string body = socket->receive_http_msg_body(content_length);
     if (!dry_run) {
         write_file(file_name, body);
     }

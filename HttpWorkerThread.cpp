@@ -46,9 +46,9 @@ void HttpWorkerThread::start() {
 
 void HttpWorkerThread::execute() {
     while (!done) {
-        std::string headers = socket->recieve_http_msg_headers(false);
+        std::string headers = socket->receive_http_msg_headers(false);
         if (!headers.empty()) {
-            std::cout << "\n\nHeaders of Recieved Request\n" << headers << "\n\n";
+            std::cout << "\n\nHeaders of Received Request\n" << headers << "\n\n";
             handle_http_request(headers);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
@@ -109,7 +109,7 @@ void HttpWorkerThread::handle_http_request(std::string &http_request) {
 
             std::cout << "Sent Response:\n" << response << std::endl;
             
-            std::string body = socket->recieve_http_msg_body(length);
+            std::string body = socket->receive_http_msg_body(length);
             save_string_file(file_path, body);
         }
     }
